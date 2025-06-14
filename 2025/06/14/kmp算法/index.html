@@ -1,0 +1,393 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>KMP算法中next数组的计算 | 氢元素的核聚变</title><meta name="author" content="Wang"><meta name="copyright" content="Wang"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="这一周学习了kmp算法,其整个执行流程都已熟悉，在此写此文一是巩固自己对于kmp算法的理解，二是想借此分析自己的观点。感谢各位的阅读了。                                                                             code[class*&#x3D;language-],pre[class*&#x3D;language-]{co">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KMP算法中next数组的计算">
+<meta property="og:url" content="http://example.com/2025/06/14/kmp%E7%AE%97%E6%B3%95/index.html">
+<meta property="og:site_name" content="氢元素的核聚变">
+<meta property="og:description" content="这一周学习了kmp算法,其整个执行流程都已熟悉，在此写此文一是巩固自己对于kmp算法的理解，二是想借此分析自己的观点。感谢各位的阅读了。                                                                             code[class*&#x3D;language-],pre[class*&#x3D;language-]{co">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/images/kmp/kmp.png">
+<meta property="article:published_time" content="2025-06-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-06-14T11:36:09.755Z">
+<meta property="article:author" content="Wang">
+<meta property="article:tag" content="KMP">
+<meta property="article:tag" content="递推">
+<meta property="article:tag" content="回溯">
+<meta property="article:tag" content="字符串匹配">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/kmp/kmp.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "KMP算法中next数组的计算",
+  "url": "http://example.com/2025/06/14/kmp%E7%AE%97%E6%B3%95/",
+  "image": "http://example.com/images/kmp/kmp.png",
+  "datePublished": "2025-06-13T16:00:00.000Z",
+  "dateModified": "2025-06-14T11:36:09.755Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Wang",
+      "url": "http://example.com/"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/2025/06/14/kmp%E7%AE%97%E6%B3%95/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'KMP算法中next数组的计算',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/images/icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><span> Home</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/images/kmp/kmp.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">氢元素的核聚变</span></a><a class="nav-page-title" href="/"><span class="site-name">KMP算法中next数组的计算</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><span> Home</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">KMP算法中next数组的计算</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-06-13T16:00:00.000Z" title="发表于 2025-06-14 00:00:00">2025-06-14</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-06-14T11:36:09.755Z" title="更新于 2025-06-14 19:36:09">2025-06-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E7%AE%97%E6%B3%95/">编程算法</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container">
+<!DOCTYPE html><html><head>
+      <title>这一周学习了kmp算法,其整个执行流程都已熟悉，在此写此文一是巩固自己对于kmp算法的理解，二是想借此分析自己的观点。感谢各位的阅读了。</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <!-- The content below will be included at the end of the <head> element. --><script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script></head><body for="html-export">
+    
+    
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="kmp算法中的next数组详解">KMP算法中的next数组详解 </h1>
+<p>这几天在学习编程算法的过程中了解到了KMP算法，发现了其在子串在主串匹配时的强大功能，代码很优美简洁干练且时间复杂度低,感觉到十分有趣。实际上，它在数据结构的地位如同EM算法(这个EM算法也非常有趣，它是K-means和GNN算法的基础和核心，有兴趣的童鞋也可以去了解认识一下。)在机器学习里的地位，因此我想借此谈一谈对于KMP算法的理解，其实你们也可以理解为我做学习的笔记和心得吧，也想借此分享一下我自己的观点。<br>
+<strong>此外，这篇文章引用了很多人的图片，下方参考文献已做备注，在这里说一声感谢，感谢你们的分享👍。</strong></p>
+<h2 id="待处理的问题">待处理的问题 </h2>
+<p>首先在此还需要想KMP算法的三位创始人Knuth,Morris,Pratt致敬，他们的算法在当今社会中可谓是遍地都是，在此首先感谢他们的聪明才智。<br>
+实际上这一问题是针对于字符串的子串匹配问题，比如字符串"aaabaaaaabcb"查找"aaabc"这个子串，这个该怎么做呢?<br>
+其中最为简单想到的字符串匹配算法是暴力匹配(Brute Force)，如下图(在此感谢 NebulaGMY_萌新星云做的图):<br>
+<img src="/images/kmp/loop.png" alt="alt text"><br>
+实际上为了找到匹配的模式串"aaabc"，我们将模式串一遍遍和主串"aaabaaaaabcb"比较，如果有一次不对，就移动模式串向右移动一位，直到移动到最后主串最后尾巴为止(即二者的长度之差为移动长度),其本质上是<strong>暴力匹配</strong>。<br>
+算法分析如下:<br>
+其中主串长度为n，子串即模式匹配串的长度为m，因而普遍熟知的暴力求解法的时间复杂度最优为O(m)，最差为O(n<em>m)，但是其空间复杂度为O(1)，而KMP算法为了解决O(m</em>n)时间复杂度过大的问题，打算采取空间换取时间来解决，即引入next数组，这一点上与我们熟知的哈希表结构类似。</p>
+<h2 id="next数组-解决回溯效率低">next数组-解决回溯效率低 </h2>
+<p>在此之前，我们需要引入最长前后缀的长度概念，因为每个next数组除了第一个元素外，其余存储的数据都是这个长度即最长的公共前后缀。<br>
+其中最长公共前后缀的公式如下：(j=0对应-1是根据代码而来，也可以为0，下文会进行详细解释)<br>
+<img src="/images/kmp/math1.png" alt="alt text"><br>
+比如我们举个例子来理解:<br>
+例如，ABCDFR中D对应的数值为0即next[3]=0,而ABABDJK中的B对应数值为2即next[3]=2，ABCABDE中的第二个B对应数值为3即next[4]=3。<br>
+相关的最长公共前后缀的实例可见下图:<br>
+<img src="/images/kmp/example1.png" alt="alt text"><br>
+在这里做一个小测试abcabdfabcabde中的e的最长公共前后缀是什么？<br>
+其中next数组中每个下标对应存储的元素是<strong>包括该元素的公共前后缀的长度</strong>(部分资料认为的next数组不一样，实际上是包不包含该元素，本文认为这里是包含该元素计算的最大公共前后缀长度，下例和代码也按这个标准),其原因就在于<strong>它要尽可能利用模式串的已匹配信息</strong>,其思路有点类似于哈希表一样存储已经遍历的信息并来查询使用。因为是公共的前后缀长度，既然存在公共相同的长度，我们就可以利用这个公共的前后缀来跳过不匹配的部分，实际上是直接将模式串向右移动。<br>
+请看下面两图的例子，大家就懂了为什么这样可以优化时间复杂度了:<br>
+<img src="/images/kmp/fig1.png" alt="alt text"><br>
+上图我们可以看到是e和c不匹配，因此我们要开始移动模式串(注意:在匹配过程中，一定是主串不动，模式串在不断右移进行匹配)，但是需要注意的是c的存在最长前后前后公共前缀ab，实际上我们可以利用这一点进行下图的平移<br>
+<img src="/images/kmp/fig2.png" alt="alt text"><br>
+可以看出由蓝色的c跳转到红色的c，其中模式串移动的长度是的已匹配长度 - 最长公共前后缀长度，模式串前面的ab移动到后面的ab，刚好二者公用这样就利用了已知的信息进行匹配而无需一遍遍遍历模式串再一次次移动模式串，需要指出的是，这两图的移动是一次程序执行的时间，其中被跳过的步数是一定不匹配(因为移动后的前缀不匹配，整个模式串肯定都不匹配，因为考虑的是首先前缀先匹配的存在)，我们需要查找的是可能匹配的存在，在这里想起了贪心算法，哈哈。<br>
+在此，用严谨的语言来描述:</p>
+<ol>
+<li>模式串移动的长度 = 主串于模式串公共已匹配长度 - 最长公共前后缀长度</li>
+<li>模式串中第一个不匹配字符的下标-&gt;（跳转到）最长公共前后缀长度的下标，例如上述两图中蓝c下标是5跳转到2即即有next[5]=3，而3=最大公共前后缀长度</li>
+</ol>
+<p>而为了进行上述算法的实现，我们需要引入next数组存储最大公共前后缀长度。其中next数组由四个性质很重要，这些为我个人总结:</p>
+<ol>
+<li>next[i]的值表示下标为i的字符前的字符串最长相等前后缀的长度，这个之前已经说了。</li>
+<li>它表示该处字符不匹配时应该回溯到的字符的下标，实际上这个跟接下来的具体代码有关</li>
+<li>next[0]的特殊性，它的值依据代码编写一般设为-1或0,我们认为其没有意义即没有前后缀字符，不怎么考虑。在此基础上，除next[0]外，next[i]对应的值就是最长公共前后缀长度</li>
+<li>关于next[i]数值，其数值不能为前缀的最长长度(可以理解不包括本身)，因为如果是最长长度，相当于没有移动，因而认为它等效于0。</li>
+</ol>
+<p><strong>注</strong>:为什么有些资料next数组是0,1开头，而有些next数组是-1,0开头?(对应性质3)<br>
+-1,0开头与0, 1开头的next数组本质是一样的。实际上，以0, 1开头的next数组就是以-1,0开头的next数组每一项加1得到的。出现这种情况的原因在于模式串起始的索引值：在程序中，一个数组的索引的起始值为0；然而在考试和书中给的模式串起始值是多从1开始。所以在考试中遇到的next数组通常是以0, 1开头；而一些程序或教程中的next数组是以-1, 0开头。<br>
+此外，下图为我关于next数组计算的手稿，有兴趣的同学可以看一下，有助于对next数组的理解:
+<img src="/images/kmp/draft.png" alt="draft"><br>
+我相信看到这一小节的各位读者，一定知道了如何计算next数组了，并且知道改如何利用next数组进行字符串匹配的全过程，但有的时候知道思路，代码不一定写好?接下来我会给出代码带大家好好理解:</p>
+<h2 id="代码思路重难点">代码思路(重难点) </h2>
+<p>我认为其中你会手算next数组或者了解了KMP算法的整体运行过程,但是可能很大概率写不出来kmp算法,这才是<strong>KMP算法的重难点</strong>。<br>
+其中<strong>重难点是next数组的构建</strong>，其实我一开始想到的是不断遍历并计算每一个数组元素内对应的next数组的值,但是这种时间复杂度太大了为O(m^2),实际上它是非常简洁的，时间复杂度是O(m+n),其思想如下:<br>
+<strong>初始化条件：</strong></p>
+<p class="math"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>next</mtext><mo stretchy="false">[</mo><mn>0</mn><mo stretchy="false">]</mo><mo>=</mo><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\text{next}[0] = -1
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">next</span></span><span class="mopen">[</span><span class="mord">0</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">−</span><span class="mord">1</span></span></span></span></span></p><p><strong>递推公式（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">j &gt; 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.854em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> 时）：</strong></p>
+<p class="math"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>next</mtext><mo stretchy="false">[</mo><mi>j</mi><mo stretchy="false">]</mo><mo>=</mo><mrow><mo fence="true">{</mo><mtable rowspacing="0.36em" columnalign="left left" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi>k</mi><mo>+</mo><mn>1</mn><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mtext>if&nbsp;</mtext><mi>p</mi><mo stretchy="false">[</mo><mi>j</mi><mo stretchy="false">]</mo><mo>=</mo><mi>p</mi><mo stretchy="false">[</mo><mi>k</mi><mo>+</mo><mn>1</mn><mo stretchy="false">]</mo><mtext>&nbsp;且&nbsp;</mtext><mi>k</mi><mo>=</mo><mtext>next</mtext><mo stretchy="false">[</mo><mi>j</mi><mo>−</mo><mn>1</mn><mo stretchy="false">]</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mtext>递归&nbsp;</mtext><mi>k</mi><mo>←</mo><mtext>next</mtext><mo stretchy="false">[</mo><mi>k</mi><mo stretchy="false">]</mo><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mtext>if&nbsp;</mtext><mi>p</mi><mo stretchy="false">[</mo><mi>j</mi><mo stretchy="false">]</mo><mo mathvariant="normal">≠</mo><mi>p</mi><mo stretchy="false">[</mo><mi>k</mi><mo>+</mo><mn>1</mn><mo stretchy="false">]</mo><mtext>&nbsp;且&nbsp;</mtext><mi>k</mi><mo>≥</mo><mn>0</mn></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mo>−</mo><mn>1</mn><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mtext>otherwise&nbsp;</mtext><mo stretchy="false">(</mo><mi>k</mi><mo>=</mo><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex">\text{next}[j] = 
+\begin{cases} 
+k + 1, &amp; \text{if } p[j] = p[k+1] \text{ 且 } k = \text{next}[j-1] \\
+\text{递归 } k \leftarrow \text{next}[k], &amp; \text{if } p[j] \neq p[k+1] \text{ 且 } k \geq 0 \\
+-1, &amp; \text{otherwise } (k = -1)
+\end{cases}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">next</span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:4.32em;vertical-align:-1.91em;"></span><span class="minner"><span class="mopen"><span class="delimsizing mult"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.35em;"><span style="top:-2.2em;"><span class="pstrut" style="height:3.15em;"></span><span class="delimsizinginner delim-size4"><span>⎩</span></span></span><span style="top:-2.192em;"><span class="pstrut" style="height:3.15em;"></span><span style="height:0.316em;width:0.8889em;"><svg xmlns="http://www.w3.org/2000/svg" width="0.8889em" height="0.316em" style="width:0.8889em" viewBox="0 0 888.89 316" preserveAspectRatio="xMinYMin"><path d="M384 0 H504 V316 H384z M384 0 H504 V316 H384z"></path></svg></span></span><span style="top:-3.15em;"><span class="pstrut" style="height:3.15em;"></span><span class="delimsizinginner delim-size4"><span>⎨</span></span></span><span style="top:-4.292em;"><span class="pstrut" style="height:3.15em;"></span><span style="height:0.316em;width:0.8889em;"><svg xmlns="http://www.w3.org/2000/svg" width="0.8889em" height="0.316em" style="width:0.8889em" viewBox="0 0 888.89 316" preserveAspectRatio="xMinYMin"><path d="M384 0 H504 V316 H384z M384 0 H504 V316 H384z"></path></svg></span></span><span style="top:-4.6em;"><span class="pstrut" style="height:3.15em;"></span><span class="delimsizinginner delim-size4"><span>⎧</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.85em;"><span></span></span></span></span></span></span><span class="mord"><span class="mtable"><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.41em;"><span style="top:-4.41em;"><span class="pstrut" style="height:3.008em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span><span class="mpunct">,</span></span></span><span style="top:-2.97em;"><span class="pstrut" style="height:3.008em;"></span><span class="mord"><span class="mord text"><span class="mord cjk_fallback">递归</span><span class="mord">&nbsp;</span></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">←</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord text"><span class="mord">next</span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mclose">]</span><span class="mpunct">,</span></span></span><span style="top:-1.53em;"><span class="pstrut" style="height:3.008em;"></span><span class="mord"><span class="mord">−</span><span class="mord">1</span><span class="mpunct">,</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.91em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:1em;"></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.41em;"><span style="top:-4.41em;"><span class="pstrut" style="height:3.008em;"></span><span class="mord"><span class="mord text"><span class="mord">if&nbsp;</span></span><span class="mord mathnormal">p</span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord mathnormal">p</span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span><span class="mclose">]</span><span class="mord text"><span class="mord">&nbsp;</span><span class="mord cjk_fallback">且</span><span class="mord">&nbsp;</span></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord text"><span class="mord">next</span></span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span><span class="mclose">]</span></span></span><span style="top:-2.97em;"><span class="pstrut" style="height:3.008em;"></span><span class="mord"><span class="mord text"><span class="mord">if&nbsp;</span></span><span class="mord mathnormal">p</span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel"><span class="mrel"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="inner"><span class="mord"><span class="mrel"></span></span></span><span class="fix"></span></span></span></span></span><span class="mrel">=</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord mathnormal">p</span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span><span class="mclose">]</span><span class="mord text"><span class="mord">&nbsp;</span><span class="mord cjk_fallback">且</span><span class="mord">&nbsp;</span></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">0</span></span></span><span style="top:-1.53em;"><span class="pstrut" style="height:3.008em;"></span><span class="mord"><span class="mord text"><span class="mord">otherwise&nbsp;</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord">−</span><span class="mord">1</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.91em;"><span></span></span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p><p>其思路我来大致具体说明一下,它是一个双指针+递推+回溯递推的思路:<br>
+其中我们遍历的每个next[j]每次最多增加1即k+1要么就是回归其对于的next下标值，其次模式串最后一位字符不影响结果不考虑，因而其实我们数组遍历的范围是从0到length-2。<br>
+为什么每次最多增加1，在这里，我们采用双指针的思路，这里使用j和k，k是前缀的指针，而j是模式串的指针。如果两个指针的下一个字符相同的话我们每次都向右遍历一次，其长度肯定是+1比如aba到abab。这里说起来可能抽象，我们举个例子来说一下，比如aba字符串(k指向第一个a,j指向第二个a，其长度是1,实际上由原来的0变为1)到abab字符串(在这里,k指向第一个b，j指向第二个b，字符相同因而+1),代码上是:next[j]=k=1后j+1，再是next[j]=k+1=2。实际上它是在前面公共前后缀的基础上不断更新的，这样无需每一次都遍历每个字符的公共前后缀，这就是不断优化计算的。<br>
+其中这里的难点是当不相等时，为什么是k=next[k]，实际上在赋值之后，我们会继续之后的循环，如果相等则在next[k]的基础上+1，如果不相等则继续将k按照之前已遍历的结果向前走而再重置为0重新计算(利用已知的数据减少时间复杂度)，这里其实运用的思路就是利用之前的数据递推回溯，回溯到更短的前缀继续尝试匹配。<br>
+在这里，我给出<strong>数学归纳法</strong>的总结:<br>
+情况 1：P[k] == P[j]<br>
+直接扩展公共前后缀，next[j+1] = k+1。显然正确。<br>
+情况 2：P[k] != P[j]<br>
+需要找到一个新的 k'，使得 P[0..k'-1] 是 P[..j-1] 的真后缀，且 P[k'] == P[j]。<br>
+由于 next[k] 是 P[0..k-1] 的最长公共前后缀长度，所以有：<br>
+P[0..next[k]-1] == P[k-next[k]..k-1]<br>
+而P[0..next[k]-1]是P[0..k-1]中(之前判断的最长公共前后缀)的次长公共前缀，我们会继续按上述判断该次长的公共前缀与后缀是否相同来判断程序是否进入情况1或者情况2</p>
+<hr>
+<p><strong>注解:</strong> <em>我们实际上是在利用已知信息不断递归缩小范围</em><br>
+<em>因此，如果P[0..next[k]-1] == P[0..j-1、] 的一个次长公共前后缀，我们将在这个次长公共前后缀+1继而的到next值，如果不行则继续上述的操作(一直递归)，比如变成P[0..next[next[k]]-1]的前缀。<br>
+当然众所周知递归很重要的一点是需要有一个递归条件，因而其跳出条件就是k变为-1那么值就为最初的开头，至此值设置为0即没有公共前后缀。</em></p>
+<hr>
+<p>该程序不断递归地检查 P[next[k]...] 是否等于 P[j]，直到 k = -1跳出递归，值设置为0。<br>
+在这里我举个例子abacababd,我们以d前面紧邻的b来计算，此时k=3，j=7，前缀是abac和后缀abab，见下图:<br>
+<img src="/images/kmp/kj1.png" alt="alt text"><br>
+c和d不同，因而k需要回溯，回溯到k=next[k]这里next[k=3]=1，因而k会回溯到1(利用之前已经存在的公共前后缀),j不变，由此我们可以观察到ab和ab是公共前后缀(p[1] == p[7]✔️)，继而k=k+1=2,next[7]=2,完成这一轮的计算.过程见下图:<br>
+<img src="/images/kmp/kj2.png" alt="alt text"><br>
+此外如果觉得还是很抽象，那么各位童鞋有兴趣的话，可以看一下这个视频<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV16X4y137qw/?spm_id_from=333.337.search-card.all.click&amp;vd_source=6db5e62cb01ffa248caaabea52932f34">KMP算法之求next数组代码讲解</a>,这个视频用图解法非常精彩，非常直观，有的时候一些算法或者数学关系其实用文字并不好描述，有的时候采用动画或形式来展示代码的分析会比较好，采用上述链接的图片(每个框都代表着递推的最大公共前后缀)，如下图:<br>
+<img src="/images/kmp/cite6.png" alt="alt text"><br>
+最后的代码如下:</p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code>    <span class="token comment"># 构建并获得next数组</span>
+    <span class="token keyword keyword-def">def</span> <span class="token function">get_next</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span>p<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> <span class="token builtin">list</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">"""
+        由模式串t求出next数组
+        :param p: 模式字符串
+        :return: next数组
+        """</span>
+        length <span class="token operator">=</span> <span class="token builtin">len</span><span class="token punctuation">(</span>p<span class="token punctuation">)</span>
+        next_arr <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">*</span> length
+        next_arr<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>  <span class="token comment"># 第一个字符前无字符串，给值-1</span>
+        j<span class="token punctuation">,</span> k <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span>
+
+        <span class="token keyword keyword-while">while</span> j <span class="token operator">&lt;</span> length <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">:</span>
+            <span class="token comment"># k为-1或比较的字符相等时</span>
+            <span class="token keyword keyword-if">if</span> k <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token keyword keyword-or">or</span> p<span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">==</span> p<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">:</span>
+                j <span class="token operator">+=</span> <span class="token number">1</span>
+                k <span class="token operator">+=</span> <span class="token number">1</span>
+                next_arr<span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">=</span> k
+            <span class="token keyword keyword-else">else</span><span class="token punctuation">:</span>
+                k <span class="token operator">=</span> next_arr<span class="token punctuation">[</span>k<span class="token punctuation">]</span>
+
+        <span class="token keyword keyword-return">return</span> next_arr
+</code></pre><pre data-role="codeBlock" data-info="java" class="language-java java"><code>    <span class="token comment">// java</span>
+    <span class="token comment">// 构建并获得next数组</span>
+    <span class="token keyword keyword-public">public</span> <span class="token keyword keyword-static">static</span> <span class="token keyword keyword-int">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token function">getNext</span><span class="token punctuation">(</span><span class="token class-name">String</span> p<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword keyword-int">int</span> length <span class="token operator">=</span> p<span class="token punctuation">.</span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword keyword-int">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> next <span class="token operator">=</span> <span class="token keyword keyword-new">new</span> <span class="token keyword keyword-int">int</span><span class="token punctuation">[</span>length<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        next<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>  <span class="token comment">// 第一个字符前无字符串，给值-1</span>
+        <span class="token keyword keyword-int">int</span> j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> k <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+
+        <span class="token keyword keyword-while">while</span> <span class="token punctuation">(</span>j <span class="token operator">&lt;</span> length <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// k为-1或比较的字符相等时</span>
+            <span class="token keyword keyword-if">if</span> <span class="token punctuation">(</span>k <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token operator">||</span> p<span class="token punctuation">.</span><span class="token function">charAt</span><span class="token punctuation">(</span>j<span class="token punctuation">)</span> <span class="token operator">==</span> p<span class="token punctuation">.</span><span class="token function">charAt</span><span class="token punctuation">(</span>k<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                j<span class="token operator">++</span><span class="token punctuation">;</span>
+                k<span class="token operator">++</span><span class="token punctuation">;</span>
+                next<span class="token punctuation">[</span>j<span class="token punctuation">]</span> <span class="token operator">=</span> k<span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span> <span class="token keyword keyword-else">else</span> <span class="token punctuation">&#123;</span>
+                k <span class="token operator">=</span> next<span class="token punctuation">[</span>k<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword keyword-return">return</span> next<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+</code></pre><p>关于最后的kmp搜寻算法，这个就跟我们之前所想无太大区别，不需要借此优化什么了。实际思路就是到哪个字符用它的next数组进行右移动，直到遍历完整个主串。<br>
+下述为kmp搜寻算法:</p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code><span class="token comment"># Python-KMP搜寻算法</span>
+<span class="token keyword keyword-def">def</span> <span class="token function">kmp</span><span class="token punctuation">(</span>s<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> t<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> <span class="token builtin">int</span><span class="token punctuation">:</span>
+        len_s<span class="token punctuation">,</span> len_t <span class="token operator">=</span> <span class="token builtin">len</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token builtin">len</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span>
+        <span class="token keyword keyword-if">if</span> len_t <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+            <span class="token keyword keyword-return">return</span> <span class="token number">0</span>  <span class="token comment"># 空模式串默认匹配位置0</span>
+        <span class="token keyword keyword-if">if</span> len_s <span class="token operator">&lt;</span> len_t<span class="token punctuation">:</span>
+            <span class="token keyword keyword-return">return</span> <span class="token operator">-</span><span class="token number">1</span>
+
+        next_arr <span class="token operator">=</span> get_next<span class="token punctuation">(</span>t<span class="token punctuation">)</span>
+        i<span class="token punctuation">,</span> j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span>
+
+        <span class="token keyword keyword-while">while</span> i <span class="token operator">&lt;</span> len_s <span class="token keyword keyword-and">and</span> j <span class="token operator">&lt;</span> len_t<span class="token punctuation">:</span>
+            <span class="token keyword keyword-if">if</span> j <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token keyword keyword-or">or</span> s<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">==</span> t<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">:</span>
+                i <span class="token operator">+=</span> <span class="token number">1</span>
+                j <span class="token operator">+=</span> <span class="token number">1</span>
+            <span class="token keyword keyword-else">else</span><span class="token punctuation">:</span>
+                j <span class="token operator">=</span> next_arr<span class="token punctuation">[</span>j<span class="token punctuation">]</span>  <span class="token comment"># i不变，j回退,j回退相当于模式串有移动</span>
+
+        <span class="token keyword keyword-return">return</span> i <span class="token operator">-</span> len_t <span class="token keyword keyword-if">if</span> j <span class="token operator">==</span> len_t <span class="token keyword keyword-else">else</span> <span class="token operator">-</span><span class="token number">1</span>
+</code></pre><pre data-role="codeBlock" data-info="java" class="language-java java"><code><span class="token comment">// Java-KMP搜寻算法</span>
+    <span class="token keyword keyword-public">public</span> <span class="token keyword keyword-static">static</span> <span class="token keyword keyword-int">int</span> <span class="token function">kmp</span><span class="token punctuation">(</span><span class="token class-name">String</span> s<span class="token punctuation">,</span> <span class="token class-name">String</span> t<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword keyword-int">int</span> lenS <span class="token operator">=</span> s<span class="token punctuation">.</span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> lenT <span class="token operator">=</span> t<span class="token punctuation">.</span><span class="token function">length</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword keyword-if">if</span> <span class="token punctuation">(</span>lenT <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword keyword-return">return</span> <span class="token number">0</span><span class="token punctuation">;</span>  <span class="token comment">// 空模式串默认匹配位置0</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token keyword keyword-if">if</span> <span class="token punctuation">(</span>lenS <span class="token operator">&lt;</span> lenT<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword keyword-return">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword keyword-int">int</span><span class="token punctuation">[</span><span class="token punctuation">]</span> next <span class="token operator">=</span> <span class="token function">getNext</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword keyword-int">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> j <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+        <span class="token keyword keyword-while">while</span> <span class="token punctuation">(</span>i <span class="token operator">&lt;</span> lenS <span class="token operator">&amp;&amp;</span> j <span class="token operator">&lt;</span> lenT<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword keyword-if">if</span> <span class="token punctuation">(</span>j <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span> <span class="token operator">||</span> s<span class="token punctuation">.</span><span class="token function">charAt</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span> <span class="token operator">==</span> t<span class="token punctuation">.</span><span class="token function">charAt</span><span class="token punctuation">(</span>j<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                i<span class="token operator">++</span><span class="token punctuation">;</span>
+                j<span class="token operator">++</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span> <span class="token keyword keyword-else">else</span> <span class="token punctuation">&#123;</span>
+                j <span class="token operator">=</span> next<span class="token punctuation">[</span>j<span class="token punctuation">]</span><span class="token punctuation">;</span>  <span class="token comment">// i不变，j回退</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+
+        <span class="token keyword keyword-return">return</span> <span class="token punctuation">(</span>j <span class="token operator">==</span> lenT<span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token punctuation">(</span>i <span class="token operator">-</span> lenT<span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+</code></pre><p>最后，引此上述代码并解释kmp利用next数组计算的全过程，我举了一个例子供大家思考，比如:<br>
+主串s = "ABABABC"，模式串t = "ABABC"<br>
+next数组：t = "ABABC" → next = [-1, 0, 0, 1, 2]<br>
+匹配过程：<br>
+初始：<br>
+i=0, j=0 → s[0]=A == t[0]=A → i=1, j=1</p>
+<p>i=1, j=1 → s[1]=B == t[1]=B → i=2, j=2</p>
+<p>i=2, j=2 → s[2]=A == t[2]=A → i=3, j=3</p>
+<p>i=3, j=3 → s[3]=B == t[3]=B → i=4, j=4</p>
+<p>i=4, j=4 → s[4]=A != C=t[4] → j = next[4] = 2  # 不匹配实际上j左移动等同于模式串向右移动，步长为原先的j-现在的j</p>
+<p>i=4, j=2 → s[4]=A == t[2]=A → i=5, j=3</p>
+<p>i=5, j=3 → s[5]=B == t[3]=B → i=6, j=4</p>
+<p>i=6, j=4 → s[6]=C == t[4]=C → i=7, j=5（此时 j == len(t)，匹配成功）<br>
+其中我们函数最终返回为：i - len(t) = 7 - 5 = 2（即模式串在主串的起始下标为2）</p>
+<h2 id="总结">总结 </h2>
+<p>最后，从next数组到kmp整个算法的流程都讲了一遍，感谢你们可以看到这里，真的很感谢你们可以看到这里，真的很有耐心，说实话对我来说写到这里也很不容易，我不仅需要参考了大量文章和资料，还要理清每个概念和细节并画图。当然在这里，还是要再次感谢那些分享博客和想法的人们，真的很厉害，他们为知识的传播做出了很大的贡献，在这里点一个大大的赞👍，此外，这篇文章可能写的太杂乱，如果文章问题可以私信我，谢谢😊。</p>
+<h2 id="参考文献">参考文献 </h2>
+<p>1.<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_46007276/article/details/104372119?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522fb62ef756d073652263413c5f4412d84%2522%252C%2522scm%2522%253A%252220140713.130102334..%2522%257D&amp;request_id=fb62ef756d073652263413c5f4412d84&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~all~top_positive~default-1-104372119-null-null.142%5ev102%5epc_search_result_base9&amp;utm_term=kmp%E7%AE%97%E6%B3%95&amp;spm=1018.2226.3001.4187">数据结构KMP算法配图详解（超详细）_kmp算法流程图-CSDN博客</a><br>
+2.<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1jb411V78H/?spm_id_from=333.337.search-card.all.click&amp;vd_source=6db5e62cb01ffa248caaabea52932f34">【天勤考研】KMP算法易懂版</a><br>
+3.<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV16X4y137qw/?spm_id_from=333.337.search-card.all.click&amp;vd_source=6db5e62cb01ffa248caaabea52932f34">KMP算法之求next数组代码讲解</a><br>
+4.<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1AY4y157yL?spm_id_from=333.788.recommend_more_video.0&amp;vd_source=6db5e62cb01ffa248caaabea52932f34">最浅显易懂的 KMP 算法讲解</a><br>
+5.<a target="_blank" rel="noopener" href="https://blog.csdn.net/gmynebula/article/details/125239503">KMP算法中next数组的计算（和前缀表的计算）</a></p>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://example.com">Wang</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://example.com/2025/06/14/kmp%E7%AE%97%E6%B3%95/">http://example.com/2025/06/14/kmp%E7%AE%97%E6%B3%95/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0标准</a> 许可协议。转载请注明来源 <a href="http://example.com" target="_blank">氢元素的核聚变</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/KMP/">KMP</a><a class="post-meta__tags" href="/tags/%E9%80%92%E6%8E%A8/">递推</a><a class="post-meta__tags" href="/tags/%E5%9B%9E%E6%BA%AF/">回溯</a><a class="post-meta__tags" href="/tags/%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%8C%B9%E9%85%8D/">字符串匹配</a></div><div class="post-share"><div class="social-share" data-image="/images/kmp/kmp.png"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2025/06/09/%E6%80%9D%E8%80%831/" title="人类简史中的认知革命"><img class="cover" src="/images/think1/human_history.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">人类简史中的认知革命</div></div><div class="info-2"><div class="info-item-1">       关于人类简史中认知革命的思考                                                                           ...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/images/icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Wang</div><div class="author-info-description">思考和探索一切未知的东西😁!</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">17</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Soul-XuYang"><i class="fab fa-github"></i><span>Follow My Github</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎访问我的博客网站，主要记录自己的学习笔记和个人成长🤖  欢迎各位交流🕊️！！！</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/06/14/kmp%E7%AE%97%E6%B3%95/" title="KMP算法中next数组的计算"><img src="/images/kmp/kmp.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="KMP算法中next数组的计算"/></a><div class="content"><a class="title" href="/2025/06/14/kmp%E7%AE%97%E6%B3%95/" title="KMP算法中next数组的计算">KMP算法中next数组的计算</a><time datetime="2025-06-13T16:00:00.000Z" title="发表于 2025-06-14 00:00:00">2025-06-14</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/06/09/%E6%80%9D%E8%80%831/" title="人类简史中的认知革命"><img src="/images/think1/human_history.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="人类简史中的认知革命"/></a><div class="content"><a class="title" href="/2025/06/09/%E6%80%9D%E8%80%831/" title="人类简史中的认知革命">人类简史中的认知革命</a><time datetime="2025-06-08T16:00:00.000Z" title="发表于 2025-06-09 00:00:00">2025-06-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/06/04/pca%E7%AE%97%E6%B3%95/" title="PCA的原理及部分关联应用"><img src="/images/pca/pca.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="PCA的原理及部分关联应用"/></a><div class="content"><a class="title" href="/2025/06/04/pca%E7%AE%97%E6%B3%95/" title="PCA的原理及部分关联应用">PCA的原理及部分关联应用</a><time datetime="2025-06-03T16:00:00.000Z" title="发表于 2025-06-04 00:00:00">2025-06-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/05/28/%E7%9F%A9%E9%98%B5/" title="矩阵的本质"><img src="/images/matrix/matrix.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="矩阵的本质"/></a><div class="content"><a class="title" href="/2025/05/28/%E7%9F%A9%E9%98%B5/" title="矩阵的本质">矩阵的本质</a><time datetime="2025-05-27T16:00:00.000Z" title="发表于 2025-05-28 00:00:00">2025-05-28</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/05/26/main-page/" title="写作的初衷"><img src="/images/1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="写作的初衷"/></a><div class="content"><a class="title" href="/2025/05/26/main-page/" title="写作的初衷">写作的初衷</a><time datetime="2025-05-25T16:00:00.000Z" title="发表于 2025-05-26 00:00:00">2025-05-26</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2025 By Wang</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.3.5</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
